@@ -401,7 +401,7 @@ fn timeout_budget_is_shared_by_all_commands_for_one_repository() {
     let helpers = temp.0.join("helpers");
     fs::create_dir_all(root.join(".git")).unwrap();
     fs::create_dir(&helpers).unwrap();
-    executable(&helpers.join("git"), "#!/bin/sh\nshift\nsleep 0.45\ncase \"$1\" in\nsymbolic-ref) printf 'main\\n' ;;\nrev-parse) printf 'sha\\n' ;;\nstatus) ;;\n*) exit 99 ;;\nesac\n");
+    executable(&helpers.join("git"), "#!/bin/sh\nshift\nsleep 0.45\ncase \"$1\" in\nsymbolic-ref) printf 'main\\n' ;;\nrev-parse) printf 'sha\\n' ;;\nfor-each-ref) printf 'refs/remotes/origin/main\\n' ;;\nstatus|pull) ;;\n*) exit 99 ;;\nesac\n");
     let mut cmd = cli(&root);
     helper_env(&mut cmd, &helpers, &temp.0);
     cmd.args(["--timeout", "1"]);
@@ -409,7 +409,10 @@ fn timeout_budget_is_shared_by_all_commands_for_one_repository() {
     let output = wait(spawn(&mut cmd), Duration::from_secs(4));
     assert_eq!(output.status.code(), Some(1));
     assert!(started.elapsed() < Duration::from_secs(3));
-    assert!(String::from_utf8_lossy(&output.stdout).contains("timed out after 1s (git status"));
+    // Each command fits within 1s, but their combined runtime exceeds it.
+    // Scheduling and process startup determine which command hits the deadline.
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("timed out after 1s"), "{stdout}");
 }
 
 #[test]
