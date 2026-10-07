@@ -150,7 +150,10 @@ fn empty_tree_non_tty_output_golden_and_default_folder() {
     assert_eq!(output.stdout, b"No git repositories found.\n");
     assert_eq!(
         String::from_utf8(output.stderr).unwrap(),
-        format!("Scanning {}…\nFound 0 repositories.\n", temp.0.display())
+        format!(
+            "Scanning {}…\nFound 0 repositories.\n",
+            temp.0.canonicalize().unwrap().display()
+        )
     );
 }
 
