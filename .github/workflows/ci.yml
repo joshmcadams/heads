@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }}, ${{ matrix.rust }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rust: stable
+          - os: macos-latest
+            rust: stable
+          - os: ubuntu-latest
+            rust: '1.74.0'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: |
+          rustup toolchain install "${{ matrix.rust }}" --profile minimal
+          rustup override set "${{ matrix.rust }}"
+      - name: Test
+        run: make test
+      - name: Install lint components
+        if: matrix.rust == 'stable'
+        run: rustup component add rustfmt clippy
+      - name: Lint
+        if: matrix.rust == 'stable'
+        run: make lint
+      - name: Build release binary and verify source package
+        if: matrix.rust == 'stable'
+        run: |
+          make build
+          make package
+          bin/heads --version
+          bin/heads --help
+      - name: Package binary
+        if: matrix.rust == 'stable'
+        run: |
+          mkdir -p dist/package
+          cp bin/heads LICENSE README.md dist/package/
+          tar -czf "dist/heads-${{ runner.os }}-${{ runner.arch }}.tar.gz" -C dist/package heads LICENSE README.md
+      - name: Upload binary
+        if: matrix.rust == 'stable'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: heads-${{ runner.os }}-${{ runner.arch }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 14

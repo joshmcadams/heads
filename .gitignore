@@ -1,0 +1,8 @@
+/target/
+/bin/
+/.agents/
+/.codex/
+/.aws/
+.DS_Store
+.env
+.env.*

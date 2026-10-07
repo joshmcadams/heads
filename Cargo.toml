@@ -1,0 +1,18 @@
+[package]
+name = "heads"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+description = "Fast-forward every clean Git repository under a folder"
+license = "MIT"
+authors = ["Josh McAdams"]
+repository = "https://github.com/joshmcadams/heads"
+readme = "README.md"
+keywords = ["git", "cli", "repository", "sync"]
+categories = ["command-line-utilities", "development-tools"]
+include = ["src/**", "tests/**", "Cargo.toml", "Cargo.lock", "README.md", "LICENSE"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

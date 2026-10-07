@@ -1,0 +1,7 @@
+REPOSITORY          BRANCH  STATUS
+------------------  ------  ------------------------
+.                   main    up-to-date
+api-service         main    synced
+experimental/thing  feat    dirty (skipped)
+failed              main    error: fatal: failed now
+1 synced · 1 up-to-date · 1 skipped · 1 error

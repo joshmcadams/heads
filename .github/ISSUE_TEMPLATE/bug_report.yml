@@ -1,0 +1,25 @@
+name: Bug report
+description: Report unexpected behavior in heads
+labels: [bug]
+body:
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include heads --version, git --version, and your OS and architecture.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the command and repository state. Remove credentials and private URLs.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Include relevant stdout and stderr.
+    validations:
+      required: true
