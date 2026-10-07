@@ -1,4 +1,5 @@
-.PHONY: build test lint install package
+.DEFAULT_GOAL := build
+.PHONY: build test lint install uninstall package check-install-dir
 
 ifeq ($(shell uname -s),Darwin)
 INSTALL_DIR ?= $(HOME)/bin
@@ -26,7 +27,13 @@ lint:
 package:
 	cargo package --offline --locked
 
-install: build
+check-install-dir:
+	@test -n "$(strip $(INSTALL_DIR))" || { echo "INSTALL_DIR must not be empty" >&2; exit 1; }
+
+install: check-install-dir build
 	mkdir -p "$(INSTALL_DIR)"
-	cp bin/heads "$(INSTALL_DIR)/heads"
+	install -m 755 bin/heads "$(INSTALL_DIR)/heads"
 	@if [ "$$(uname -s)" = Darwin ]; then codesign --force -s - "$(INSTALL_DIR)/heads"; fi
+
+uninstall: check-install-dir
+	rm -f -- "$(INSTALL_DIR)/heads"

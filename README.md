@@ -8,8 +8,21 @@ crate dependencies. Uses your system Git and works on Linux and macOS.
 
 ## Install
 
-Requires Rust 1.74 or newer, Cargo, and Git 2.23 or newer. Windows is not
-supported. Install the current source from GitHub:
+Requires Rust 1.74 or newer, Cargo, Git 2.23 or newer, and Make for the Makefile
+commands. Windows is not supported. Install from a local checkout:
+
+```sh
+git clone https://github.com/joshmcadams/heads.git
+cd heads
+make install
+heads --version
+```
+
+This builds a release binary and installs it to `~/.local/bin` on Linux or
+`~/bin` on macOS. Add that directory to your PATH. Remove it with `make uninstall`
+from the checkout. See the Make commands below for a custom installation path.
+
+You can also install directly with Cargo:
 
 ```sh
 cargo install --git https://github.com/joshmcadams/heads.git --locked
@@ -20,7 +33,7 @@ Cargo installs to `~/.cargo/bin`; add that directory to your PATH. This command
 builds from the repository's current default branch. The package is not yet
 published to crates.io.
 
-To build a local checkout, use the Make targets below.
+For a Cargo installation, remove the binary with `cargo uninstall heads`.
 
 ## Usage
 
@@ -106,22 +119,41 @@ change and is not rolled back after a later skip or error. A timeout/interrupt
 terminates an operation without rolling back updates already completed by Git.
 Avoid changing repositories concurrently while `heads` is running.
 
-## Build, test and install
+## Make commands
 
 Requires **Rust 1.74 or newer** (edition 2021), Cargo, and system Git supporting
-`git switch` (Git 2.23+). Tests use local bare remotes and executable fixtures;
-they require no network or downloaded crates. Install rustfmt and Clippy for lint.
+`git switch` (Git 2.23+), plus Make. Tests use local bare remotes and executable
+fixtures and require Git 2.28+ for `git init --initial-branch`; they require no
+network or downloaded crates. Install lint components
+with `rustup component add rustfmt clippy`.
 
 ```sh
-make build       # ./bin/heads
-make test        # cargo test --offline
+make build       # release binary at ./bin/heads (also the default for make)
+make test        # cargo test --offline --locked
 make lint        # rustfmt check and Clippy
 make package     # verify the source package in target/package
-make install     # ~/bin on macOS, ~/.local/bin on Linux
+make install     # build and install to ~/bin on macOS, ~/.local/bin on Linux
+make uninstall   # remove the installed heads binary
 ```
 
+Override `INSTALL_DIR` for both installation and removal. Paths containing
+spaces are supported:
+
+```sh
+make install INSTALL_DIR="$HOME/tools/bin"
+make uninstall INSTALL_DIR="$HOME/tools/bin"
+```
+
+Use the same directory for both commands. Installation sets executable
+permissions and replaces an existing `heads` binary at that path. Uninstall
+removes only that binary, keeps the directory and its other contents, and
+succeeds if the binary is already absent. Uninstall does not build the project
+or require Rust. An empty `INSTALL_DIR` is rejected.
+
 The build and install targets ad hoc sign the binary on macOS with
-`codesign --force -s -`. Add the installation directory to your PATH.
+`codesign --force -s -`; this uses the macOS command-line tools. Add the
+installation directory to your PATH. Build, test, lint, and package use Cargo
+offline with the committed lockfile.
 
 `make build` produces a statically linked Linux executable by enabling static
 CRT linking. macOS builds use native platform linking. A plain `cargo build`
@@ -133,7 +165,8 @@ cargo build --offline --locked --release --target x86_64-unknown-linux-musl
 ```
 
 CI tests stable Rust on Linux and macOS and Rust 1.74 on Linux. Stable jobs also
-run lint, build release binaries, verify Cargo packaging, and upload tarballs
+run lint, build release binaries, check install/uninstall in a temporary directory,
+verify Cargo packaging, and upload tarballs
 containing the binary, README, and license as workflow artifacts. These are
 CI artifacts; they are not tagged releases.
 

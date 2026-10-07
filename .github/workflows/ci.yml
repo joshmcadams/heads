@@ -51,6 +51,19 @@ jobs:
           make package
           bin/heads --version
           bin/heads --help
+      - name: Check install and uninstall
+        if: matrix.rust == 'stable'
+        run: |
+          heads_install_dir="$RUNNER_TEMP/heads install"
+          mkdir -p "$heads_install_dir"
+          touch "$heads_install_dir/keep"
+          make install INSTALL_DIR="$heads_install_dir"
+          "$heads_install_dir/heads" --version
+          if [ "$RUNNER_OS" = macOS ]; then codesign --verify "$heads_install_dir/heads"; fi
+          make uninstall INSTALL_DIR="$heads_install_dir"
+          make uninstall INSTALL_DIR="$heads_install_dir"
+          test ! -e "$heads_install_dir/heads"
+          test -f "$heads_install_dir/keep"
       - name: Package binary
         if: matrix.rust == 'stable'
         run: |
