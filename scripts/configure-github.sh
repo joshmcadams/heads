@@ -4,7 +4,8 @@ set -euo pipefail
 
 repo='joshmcadams/heads'
 command -v gh >/dev/null || { echo 'Install GitHub CLI and run gh auth login.' >&2; exit 1; }
-if [ "$(gh api "repos/$repo" --jq '.permissions.admin')" != true ]; then
+admin=$(gh api "repos/$repo" --jq '.permissions.admin')
+if [ "$admin" != true ]; then
   echo "Repository admin access is required for $repo." >&2
   exit 1
 fi
