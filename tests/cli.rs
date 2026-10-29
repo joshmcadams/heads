@@ -225,13 +225,17 @@ fn timeout_kills_remote_helper_and_its_descendant_and_preserves_repo() {
     let (helpers, marker) = sleepy_remote(&fixture);
     let before = snapshot(&fixture.repo);
     let mut cmd = cli(&fixture.repo);
-    cmd.args(["--timeout", "1"]);
+    cmd.args(["--timeout", "3"]);
     helper_env(&mut cmd, &helpers, &marker);
     let started = Instant::now();
-    let output = wait(spawn(&mut cmd), Duration::from_secs(5));
+    let mut child = spawn(&mut cmd);
+    // Only the helper's own startup is racy; wait for it so the deadline
+    // always fires while the helper and its descendant are running.
+    wait_for_file(&marker, &mut child);
+    let output = wait(child, Duration::from_secs(8));
     assert_eq!(output.status.code(), Some(1));
-    assert!(String::from_utf8_lossy(&output.stdout).contains("error: timed out after 1s (git pull"));
-    assert!(started.elapsed() < Duration::from_secs(5));
+    assert!(String::from_utf8_lossy(&output.stdout).contains("error: timed out after 3s (git pull"));
+    assert!(started.elapsed() < Duration::from_secs(8));
     assert_dead(&marker);
     assert_eq!(snapshot(&fixture.repo), before);
 }
