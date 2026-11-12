@@ -18,9 +18,11 @@ make install
 heads --version
 ```
 
-This builds a release binary and installs it to `~/.local/bin` on Linux or
-`~/bin` on macOS. Add that directory to your PATH. Remove it with `make uninstall`
-from the checkout. See the Make commands below for a custom installation path.
+This builds a release binary and installs it to whichever of `~/.local/bin` and
+`~/bin` comes first in your PATH. If neither is in your PATH, it installs to
+`~/.local/bin` on Linux or `~/bin` on macOS and tells you to add that directory to
+your PATH. Remove it with `make uninstall` from the checkout. See the Make commands
+below for a custom installation path.
 
 You can also install directly with Cargo:
 
@@ -132,7 +134,7 @@ make build       # release binary at ./bin/heads (also the default for make)
 make test        # cargo test --offline --locked
 make lint        # rustfmt check and Clippy
 make package     # verify the source package in target/package
-make install     # build and install to ~/bin on macOS, ~/.local/bin on Linux
+make install     # build and install to ~/.local/bin or ~/bin, whichever is first in PATH
 make uninstall   # remove the installed heads binary
 ```
 
@@ -144,15 +146,18 @@ make install INSTALL_DIR="$HOME/tools/bin"
 make uninstall INSTALL_DIR="$HOME/tools/bin"
 ```
 
-Use the same directory for both commands. Installation sets executable
-permissions and replaces an existing `heads` binary at that path. Uninstall
+Use the same directory for both commands. Without `INSTALL_DIR`, uninstall
+chooses the directory the same way installation does, so run it with the same
+PATH. Installation sets executable permissions and replaces an existing `heads`
+binary at that path. It notes when that directory is not in your PATH, or when a
+different `heads` comes first in your PATH. Uninstall
 removes only that binary, keeps the directory and its other contents, and
 succeeds if the binary is already absent. Uninstall does not build the project
 or require Rust. An empty `INSTALL_DIR` is rejected.
 
 The build and install targets ad hoc sign the binary on macOS with
-`codesign --force -s -`; this uses the macOS command-line tools. Add the
-installation directory to your PATH. Build, test, lint, and package use Cargo
+`codesign --force -s -`; this uses the macOS command-line tools. Build, test,
+lint, and package use Cargo
 offline with the committed lockfile.
 
 `make build` produces a statically linked Linux executable by enabling static

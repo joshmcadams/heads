@@ -2,9 +2,18 @@
 .PHONY: build test lint install uninstall package check-install-dir
 
 ifeq ($(shell uname -s),Darwin)
-INSTALL_DIR ?= $(HOME)/bin
+PLATFORM_INSTALL_DIR := $(HOME)/bin
 else
-INSTALL_DIR ?= $(HOME)/.local/bin
+PLATFORM_INSTALL_DIR := $(HOME)/.local/bin
+endif
+
+# Default to whichever of ~/.local/bin and ~/bin comes first in PATH, so the installed
+# binary is the one the shell runs. Fall back to the platform's usual directory.
+ifeq ($(origin INSTALL_DIR),undefined)
+PATH_INSTALL_DIR := $(shell IFS=:; for d in $$PATH; do \
+	case "$${d%/}" in ("$$HOME/.local/bin"|"$$HOME/bin") printf '%s' "$${d%/}"; exit;; esac; \
+	done)
+INSTALL_DIR := $(or $(PATH_INSTALL_DIR),$(PLATFORM_INSTALL_DIR))
 endif
 
 build:
@@ -34,6 +43,12 @@ install: check-install-dir build
 	mkdir -p "$(INSTALL_DIR)"
 	install -m 755 bin/heads "$(INSTALL_DIR)/heads"
 	@if [ "$$(uname -s)" = Darwin ]; then codesign --force -s - "$(INSTALL_DIR)/heads"; fi
+	@found="$$(command -v heads || true)"; \
+	if [ -z "$$found" ]; then \
+		echo "note: $(INSTALL_DIR) is not in your PATH; add it to run heads" >&2; \
+	elif [ "$$found" != "$(INSTALL_DIR)/heads" ]; then \
+		echo "note: heads in your PATH is $$found, not $(INSTALL_DIR)/heads" >&2; \
+	fi
 
 uninstall: check-install-dir
 	rm -f -- "$(INSTALL_DIR)/heads"

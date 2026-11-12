@@ -14,8 +14,10 @@ make build
 make package
 ```
 
-Use `make install` and `make uninstall` for the platform's default installation
-directory, or pass the same `INSTALL_DIR` to both. To check these targets without
+Use `make install` and `make uninstall` for the default installation directory
+(whichever of `~/.local/bin` and `~/bin` comes first in PATH, otherwise the
+platform's usual one), or pass the same `INSTALL_DIR` to both. To check these
+targets without
 changing your usual installation:
 
 ```sh
